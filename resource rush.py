@@ -60,8 +60,8 @@ class Game:
         self.faction1.allocate_units()
         self.faction2.allocate_units()
 
-        self.resolve_actions(self.faction1)
-        self.resolve_actions(self.faction2)
+        self.resolve_actions(self.faction1, self.faction2)
+        self.resolve_actions(self.faction2, self.faction1)
 
         self.faction1.reset_units()
         self.faction2.reset_units()
@@ -69,16 +69,28 @@ class Game:
 
         self.round += 1
 
-    def resolve_actions(self, faction):
+    def resolve_actions(self, faction, opponent):
         faction.gather_resources("water", self.env_controller.hazards["water"])
         faction.gather_resources("food", self.env_controller.hazards["food"])
         faction.gather_resources("energy", self.env_controller.hazards["energy"])
 
-        # Simple attack/defend mechanics (can be expanded)
         if faction.allocated_units["attack"] > 0:
-            print(f"{faction.name} is attacking!")
-        if faction.allocated_units["defend"] > 0:
-            print(f"{faction.name} is defending!")
+            self.resolve_combat(faction, opponent)
+
+    def resolve_combat(self, attacker, defender):
+        attack_strength = attacker.allocated_units["attack"]
+        defense_strength = defender.allocated_units["defend"]
+
+        if attack_strength > defense_strength:
+            loss = attack_strength - defense_strength
+            defender.units = max(0, defender.units - loss)
+            print(f"{attacker.name} wins the combat! {defender.name} loses {loss} units.")
+        elif defense_strength > attack_strength:
+            loss = defense_strength - attack_strength
+            attacker.units = max(0, attacker.units - loss)
+            print(f"{defender.name} successfully defends! {attacker.name} loses {loss} units.")
+        else:
+            print("The combat is a draw! No units are lost.")
 
     def check_winner(self):
         resources1 = sum(self.faction1.resources.values())
